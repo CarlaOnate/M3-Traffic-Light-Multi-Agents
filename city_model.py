@@ -6,7 +6,7 @@ from driver_agent import DriverAgent
 rows = 21
 columns = 21
 
-class CityModel(mesa.Model):     
+class CityModel(mesa.Model):
     def __init__(self, agents, time):
         self.schedule = mesa.time.RandomActivationByType(self)
         self.grid = mesa.space.MultiGrid(rows, columns, False)
@@ -24,18 +24,6 @@ class CityModel(mesa.Model):
             'Congestion': CityModel.getCurrentCongestion,
             'SuccessRateWithoutCrash': CityModel.getsuccessRateWithoutCrash,
             'MovesByDriver': CityModel.getMovesByDriver,
-            'MiddleIntersectionTime_EAST': CityModel.getMiddleIntersectionTime,
-            'RightIntersectionTime_EAST': CityModel.getRightIntersectionTime,
-            'UpperIntersectionTime_EAST': CityModel.getUpperIntersectionTime
-        })
-        self.datacollector_general = mesa.DataCollector(
-            model_reporters= {
-            'Crashes': CityModel.getNumberOfCrashes,
-            'Congestion': CityModel.getCurrentCongestion,
-            'SuccessRateWithoutCrash': CityModel.getsuccessRateWithoutCrash,
-            'MovesByDriver': CityModel.getMovesByDriver}
-        ) 
-        self.datacollector_lights = mesa.DataCollector(model_reporters={
             'MiddleIntersectionTime_EAST': CityModel.getMiddleIntersectionTime,
             'RightIntersectionTime_EAST': CityModel.getRightIntersectionTime,
             'UpperIntersectionTime_EAST': CityModel.getUpperIntersectionTime
@@ -104,8 +92,7 @@ class CityModel(mesa.Model):
         self.schedule.step()
         if self.steps < self.agents: self.createDriver()
         self.steps += 1
-        self.datacollector_general.collect(self)
-        self.datacollector_lights.collect(self)
+        self.datacollector.collect(self)
         
     # Funciones se modifica segun heurisitca de cada quien 
     @staticmethod
