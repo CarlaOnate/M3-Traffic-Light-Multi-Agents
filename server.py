@@ -56,39 +56,42 @@ simulation_params = {
     )
 }
 
-""" params = {
+params = {
     "agents": 5,
     "time": 25
 }
 results = mesa.batch_run(
     CityModel,
     parameters=params,
-    iterations=10,
-    max_steps=500,  # time
+    iterations=1,
+    max_steps=50,  # time
     number_processes=1,
     data_collection_period=1,
     display_progress=True,
-)   """
+)
 
-chartCrashes = ChartModule([{"Label": "Crashes", "Color": "Red"}], data_collector_name='datacollector')
-chartCongestion = ChartModule([{"Label": "Congestion", "Color": "Red"}], data_collector_name='datacollector')
-chartSanity = ChartModule([{"Label": "Sanity", "Color": "Red"}], data_collector_name='datacollector')
-chartTimeOfTrafficLightOn = ChartModule([{"Label": "TimeOfTrafficLightOn", "Color": "Blue"}], data_collector_name='datacollector')
-chartSuccessRateWithoutCrash = ChartModule([{"Label": "SuccessRateWithoutCrash", "Color": "Blue"}], data_collector_name='datacollector')
-chartMovesByDriver = ChartModule([{"Label": "MovesByDriver", "Color": "Blue"}], data_collector_name='datacollector')
+chartCrashes = ChartModule([{"Label": "Crashes", "Color": "Red"}], data_collector_name='datacollector_general')
+chartTimeOfTrafficLightOn_1 = ChartModule([{"Label": "MiddleIntersectionTime_EAST", "Color": "Blue"}], data_collector_name='datacollector_lights')
+chartTimeOfTrafficLightOn_2 = ChartModule([{"Label": "RightIntersectionTime_EAST", "Color": "Blue"}], data_collector_name='datacollector_lights')
+chartTimeOfTrafficLightOn_3 = ChartModule([{"Label": "UpperIntersectionTime_EAST", "Color": "Blue"}], data_collector_name='datacollector_lights')
+chartCongestion = ChartModule([{"Label": "Congestion", "Color": "Red"}], data_collector_name='datacollector_general')
+
+""" chartSuccessRateWithoutCrash = ChartModule([{"Label": "SuccessRateWithoutCrash", "Color": "Blue"}], data_collector_name='datacollector')
+chartMovesByDriver = ChartModule([{"Label": "MovesByDriver", "Color": "Blue"}], data_collector_name='datacollector') """
 
 grid = CanvasGrid(agent_portrayal, 21, 21, PIXELS_GRID, PIXELS_GRID)
 
 server = mesa.visualization.ModularServer(
     CityModel, [grid,
-                chartCrashes,
-                chartSanity,
                 chartCongestion,
-                chartTimeOfTrafficLightOn,
-                chartSuccessRateWithoutCrash,
-                chartMovesByDriver], 
+                chartCrashes,
+                chartTimeOfTrafficLightOn_1,
+                chartTimeOfTrafficLightOn_2,
+                chartTimeOfTrafficLightOn_3], 
     "Smart Traffic Light", simulation_params
 )
+
+#print(results)
 
 server.port = 8524
 server.launch()

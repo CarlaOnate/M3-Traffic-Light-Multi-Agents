@@ -13,7 +13,11 @@ class SmartTrafficLightAgent(mesa.Agent):
         self.firstETA = math.inf
         self.hasAnAmbulance = False
         self.driversSample = driversSample
-        
+        self.timeOn = 0
+    
+    def addTimeOn(self):
+        self.timeOn += 1
+
     def changeStatus(self, color) -> None:
         self.color = color
         

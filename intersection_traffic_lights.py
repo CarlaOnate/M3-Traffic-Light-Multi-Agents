@@ -2,8 +2,9 @@ import mesa
 import random
 
 class IntersectionTrafficLightsAgent(mesa.Agent):
-    def __init__(self, unique_id, model, smt1, smt2, driverSample, layerLevel = 0):
+    def __init__(self, unique_id, model, smt1, smt2, driverSample, identifier, layerLevel = 0):
         super().__init__(unique_id, model)
+        self.identifier = identifier
         self.smt1 = smt1
         self.smt2 = smt2
         self.layerLevel = layerLevel
@@ -12,6 +13,8 @@ class IntersectionTrafficLightsAgent(mesa.Agent):
     def changeTrafficLight(self, smt1Color, smt2Color) -> None:
         self.smt1.changeStatus(smt1Color)
         self.smt2.changeStatus(smt2Color)
+        if smt1Color == "green": self.smt1.addTimeOn()
+        else: self.smt2.addTimeOn()
         
     def calculatePriority(self) -> None:
         agentsInCell = self.model.grid.get_cell_list_contents([self.pos])

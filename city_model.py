@@ -6,12 +6,6 @@ from driver_agent import DriverAgent
 rows = 21
 columns = 21
 
-# De aqui solo se modifca el 'driverType'
-# 1 -> GoodDriver
-# 2 -> Ambulance
-# 3 -> CrazyDriver
-# 4 -> WannaBeCrazyDriver
-# 5 -> Mix of drivers or truck, it's up to you
 class CityModel(mesa.Model):     
     def __init__(self, agents, time):
         self.schedule = mesa.time.RandomActivationByType(self)
@@ -21,17 +15,32 @@ class CityModel(mesa.Model):
         self.running = True
         self.time = time
         self.steps = 0
+        self.collisions = 0
         driverSample = DriverAgent(self.next_id(), self, 0)
-        self.driverType = 1 # Solo se modifica segun el driver de cada quien
+        self.driverType = 1
         self.datacollector = mesa.DataCollector(
+            model_reporters={
+            'Crashes': CityModel.getNumberOfCrashes,
+            'Congestion': CityModel.getCurrentCongestion,
+            'SuccessRateWithoutCrash': CityModel.getsuccessRateWithoutCrash,
+            'MovesByDriver': CityModel.getMovesByDriver,
+            'MiddleIntersectionTime_EAST': CityModel.getMiddleIntersectionTime,
+            'RightIntersectionTime_EAST': CityModel.getRightIntersectionTime,
+            'UpperIntersectionTime_EAST': CityModel.getUpperIntersectionTime
+        })
+        self.datacollector_general = mesa.DataCollector(
             model_reporters= {
             'Crashes': CityModel.getNumberOfCrashes,
             'Congestion': CityModel.getCurrentCongestion,
-            'Sanity': CityModel.getSanity,
-            'TimeOfTrafficLightOn': CityModel.getTimeOfTrafficLightOn,
             'SuccessRateWithoutCrash': CityModel.getsuccessRateWithoutCrash,
             'MovesByDriver': CityModel.getMovesByDriver}
         ) 
+        self.datacollector_lights = mesa.DataCollector(model_reporters={
+            'MiddleIntersectionTime_EAST': CityModel.getMiddleIntersectionTime,
+            'RightIntersectionTime_EAST': CityModel.getRightIntersectionTime,
+            'UpperIntersectionTime_EAST': CityModel.getUpperIntersectionTime
+        })
+
         # Add agents
         for row in range (rows):
             for col in range (columns):
@@ -69,9 +78,9 @@ class CityModel(mesa.Model):
                     smt6 = SmartTrafficLightAgent(self.next_id(), self, 9, "east", driverSample)
                     self.addAgent(smt6, row, col) 
         # Add intersections
-        self.addAgent(IntersectionTrafficLightsAgent(self.next_id(), self, smt1, smt2, driverSample), 10, 10)
-        self.addAgent(IntersectionTrafficLightsAgent(self.next_id(), self, smt3, smt4, driverSample), 10, 20)
-        self.addAgent(IntersectionTrafficLightsAgent(self.next_id(), self, smt5, smt6, driverSample), 20, 10)
+        self.addAgent(IntersectionTrafficLightsAgent(self.next_id(), self, smt1, smt2, driverSample, "Middle Intersection"), 10, 10)
+        self.addAgent(IntersectionTrafficLightsAgent(self.next_id(), self, smt3, smt4, driverSample, "Right Intersection"), 10, 20)
+        self.addAgent(IntersectionTrafficLightsAgent(self.next_id(), self, smt5, smt6, driverSample, "Upper Intersection"), 20, 10)
 
     def addAgent(self, agent, row, col) -> None:
         self.schedule.add(agent)
@@ -95,23 +104,44 @@ class CityModel(mesa.Model):
         self.schedule.step()
         if self.steps < self.agents: self.createDriver()
         self.steps += 1
+        self.datacollector_general.collect(self)
+        self.datacollector_lights.collect(self)
         
     # Funciones se modifica segun heurisitca de cada quien 
     @staticmethod
     def getNumberOfCrashes(model) -> int:
-        return 1
+        intersections = [agent for agent in model.schedule.agents if type(agent) == IntersectionTrafficLightsAgent]
+        for intersection in intersections:
+            agentsInCell = [agent for agent in model.grid.get_cell_list_contents([intersection.pos]) if type(agent) == DriverAgent]
+            if len(agentsInCell) > 1: model.collisions += 1
+        return model.collisions
 
     @staticmethod
     def getCurrentCongestion(model) -> int:
-        return 1
+        congestion = 0
+        intersections = [agent for agent in model.schedule.agents if type(agent) == IntersectionTrafficLightsAgent]
+        for intersection in intersections:
+            congestion = intersection.smt1.congestion + intersection.smt2.congestion
+        return congestion
 
     @staticmethod
-    def getSanity(model) -> int:
-        return 1
-
-    @staticmethod
-    def getTimeOfTrafficLightOn(model) -> int:
-        return 1
+    def getMiddleIntersectionTime(model) -> int:
+        """ trafficLights = [agent.smt1.color for agent in model.schedule.agents if type(agent) == IntersectionTrafficLightsAgent and agent.identifier == "Middle Intersection"]
+        return 1 if "green" in trafficLights else 0  """
+        trafficLights = [agent.smt1.timeOn for agent in model.schedule.agents if type(agent) == IntersectionTrafficLightsAgent and agent.identifier == "Middle Intersection"]
+        return trafficLights[0] 
+    
+    def getRightIntersectionTime(model) -> int:
+        """ trafficLights = [agent.smt2.color for agent in model.schedule.agents if type(agent) == IntersectionTrafficLightsAgent and agent.identifier == "Right Intersection"]
+        return 1 if "green" in trafficLights else 0  """
+        trafficLights = [agent.smt2.timeOn for agent in model.schedule.agents if type(agent) == IntersectionTrafficLightsAgent and agent.identifier == "Right Intersection"]
+        return trafficLights[0] 
+    
+    def getUpperIntersectionTime(model) -> int:
+        """ trafficLights = [agent.smt1.color for agent in model.schedule.agents if type(agent) == IntersectionTrafficLightsAgent and agent.identifier == "Upper Intersection"]
+        return 1 if "green" in trafficLights else 0  """
+        trafficLights = [agent.smt1.timeOn for agent in model.schedule.agents if type(agent) == IntersectionTrafficLightsAgent and agent.identifier == "Upper Intersection"]
+        return trafficLights[0] 
 
     @staticmethod
     def getsuccessRateWithoutCrash(model) -> int:
