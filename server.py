@@ -3,6 +3,7 @@ import mesa
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 from mesa.visualization.UserParam import UserSettableParameter
 from mesa.visualization.modules import ChartModule, CanvasGrid
 
@@ -65,15 +66,31 @@ params = {
 results = mesa.batch_run(
     CityModel,
     parameters=params,
-    iterations=1,
-    max_steps=50,  # time
+    iterations=100,
+    max_steps=200,  # time
     number_processes=1,
     data_collection_period=1,
     display_progress=True,
 )
 
-print(results)
+results_df = pd.DataFrame(results)
+middleIntersectionTime_1 = pd.DataFrame(results_df, columns=['MiddleIntersectionTime_EAST'])
+middleIntersectionTime_2 = pd.DataFrame(results_df, columns=['RightIntersectionTime_EAST'])
+middleIntersectionTime_3 = pd.DataFrame(results_df, columns=['UpperIntersectionTime_EAST'])
+congestion = pd.DataFrame(results_df, columns=['Congestion'])
 
+crashes = pd.DataFrame(results_df, columns=['Crashes'])
+results_filtered_1 = middleIntersectionTime_1[(results_df.Step == 50)]
+results_filtered_2 = middleIntersectionTime_2[(results_df.Step == 50)]
+results_filtered_3 = middleIntersectionTime_3[(results_df.Step == 50)]
+crashes_filtered = crashes[(results_df.Step == 50)]
+congestion_filtered = congestion[(results_df.Step == 50)]
+
+results_filtered_1.plot()
+results_filtered_2.plot()
+results_filtered_3.plot()
+crashes_filtered.plot()
+congestion_filtered.plot()
 
 chartCrashes = ChartModule([{"Label": "Crashes", "Color": "Red"}], data_collector_name='datacollector')
 chartTimeOfTrafficLightOn_1 = ChartModule([{"Label": "MiddleIntersectionTime_EAST", "Color": "Blue"}], data_collector_name='datacollector')
@@ -81,8 +98,6 @@ chartTimeOfTrafficLightOn_2 = ChartModule([{"Label": "RightIntersectionTime_EAST
 chartTimeOfTrafficLightOn_3 = ChartModule([{"Label": "UpperIntersectionTime_EAST", "Color": "Blue"}], data_collector_name='datacollector')
 chartCongestion = ChartModule([{"Label": "Congestion", "Color": "Red"}], data_collector_name='datacollector')
 
-""" chartSuccessRateWithoutCrash = ChartModule([{"Label": "SuccessRateWithoutCrash", "Color": "Blue"}], data_collector_name='datacollector')
-chartMovesByDriver = ChartModule([{"Label": "MovesByDriver", "Color": "Blue"}], data_collector_name='datacollector') """
 
 grid = CanvasGrid(agent_portrayal, 21, 21, PIXELS_GRID, PIXELS_GRID)
 
@@ -98,3 +113,5 @@ server = mesa.visualization.ModularServer(
 
 server.port = 8524
 server.launch()
+
+
