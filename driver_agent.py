@@ -1,4 +1,5 @@
 import mesa
+import random
 from road_agent import RoadAgent
 from intersection_traffic_lights import IntersectionTrafficLightsAgent
 from smart_traffic_light_agent import SmartTrafficLightAgent
@@ -10,7 +11,7 @@ class DriverAgent(mesa.Agent):
         self.velocityIndex = 0
         self.driverType = driverType
         # Los siguientes se modifican segun el driver
-        self.velocity = 2
+        self.velocity = random.randrange(1, 3, 1)
         self.isPriority = False # Ambulance
         self.sanity = 0
     
